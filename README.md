@@ -1,4 +1,5 @@
 # fix-me
 
-Implement a server component and two client components that exchange messages between each other,
-over the TCP protocol, ensuring that the messages are well-formed and are delivered correctly.
+This is the last project from the Java world at 42. You will learn to develop
+multi-threaded network applications with asynchronous sockets and the java executor
+framework
