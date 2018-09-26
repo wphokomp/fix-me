@@ -1,4 +1,4 @@
-package com.wphokomp.fixme.router.Model;
+package com.wphokomp.fixme.router.Models;
 
 import com.wphokomp.fixme.router.Handlers.Handler;
 import lombok.Getter;
@@ -20,5 +20,6 @@ public class Client {
     private Handler handler;
     private boolean isRead;
     private int clientId;
-
+    private Thread mainThread;
 }
+

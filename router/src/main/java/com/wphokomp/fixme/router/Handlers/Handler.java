@@ -2,7 +2,7 @@ package com.wphokomp.fixme.router.Handlers;
 
 import com.wphokomp.fixme.router.Controller.Route;
 import com.wphokomp.fixme.router.Interface.IVerify;
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 
 import java.io.IOException;
 import java.nio.channels.CompletionHandler;
@@ -19,6 +19,7 @@ public class Handler implements CompletionHandler<Integer, Client> {
     public void completed(Integer res, Client client) {
         if (res == -1) {
             try {
+//                client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
                 client.getAsynchronousSocketChannel().close();
                 Route.removeClient(client.getClientId());
                 String port = client.getAsynchronousServerSocketChannel()

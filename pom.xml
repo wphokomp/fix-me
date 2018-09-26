@@ -60,6 +60,7 @@
         <module>router</module>
         <module>market</module>
         <module>broker</module>
+        <module>core</module>
     </modules>
 
 </project>

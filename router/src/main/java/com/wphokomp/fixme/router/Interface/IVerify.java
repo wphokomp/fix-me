@@ -1,6 +1,6 @@
 package com.wphokomp.fixme.router.Interface;
 
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 
 public interface IVerify {
     public static int CHECKSUM = 1;

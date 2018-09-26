@@ -1,7 +1,7 @@
 package com.wphokomp.fixme.router.Handlers;
 
 import com.wphokomp.fixme.router.Interface.IVerify;
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 
 public class Redirect implements IVerify {
     @Override

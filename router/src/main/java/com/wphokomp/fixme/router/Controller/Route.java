@@ -1,7 +1,7 @@
 package com.wphokomp.fixme.router.Controller;
 
 import com.wphokomp.fixme.router.Handlers.Server;
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 import lombok.Getter;
 
 import java.util.ArrayList;
