@@ -1,6 +1,6 @@
 package com.wphokomp.fixme.router.Handlers;
 
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
@@ -30,7 +30,7 @@ public class Server implements Runnable {
             asynchronousServerSocketChannel.accept(client, new Connection());
             Thread.currentThread().join();
         } catch (Exception ex) {
-            System.out.println(ex);
+            System.out.println(ex.getMessage());
         }
     }
 }

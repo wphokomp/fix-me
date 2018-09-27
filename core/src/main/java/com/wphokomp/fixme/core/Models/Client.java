@@ -20,6 +20,7 @@ public class Client {
     private Handler handler;
     private boolean isRead;
     private int clientId;
+    private Thread mainThread;
 
 }
 

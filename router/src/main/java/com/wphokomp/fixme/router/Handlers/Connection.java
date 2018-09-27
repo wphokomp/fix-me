@@ -1,7 +1,7 @@
 package com.wphokomp.fixme.router.Handlers;
 
 import com.wphokomp.fixme.router.Controller.Route;
-import com.wphokomp.fixme.router.Model.Client;
+import com.wphokomp.fixme.router.Models.Client;
 
 import java.io.IOException;
 import java.net.SocketAddress;

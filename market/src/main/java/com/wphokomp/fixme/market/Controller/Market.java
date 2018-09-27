@@ -1,7 +1,7 @@
 package com.wphokomp.fixme.market.Controller;
 
-import com.wphokomp.fixme.router.Handlers.Handler;
-import com.wphokomp.fixme.router.Models.Client;
+import com.wphokomp.fixme.market.Handler.MarketHandler;
+import com.wphokomp.fixme.core.Models.Client;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -42,8 +42,8 @@ public class Market {
         client.setRead(true);
         client.setMainThread(Thread.currentThread());
 
-        Handler handler = new Handler();
-        asynchronousSocketChannel.read(client.getByteBuffer(), client, handler);
+        MarketHandler marketHandler = new MarketHandler();
+        asynchronousSocketChannel.read(client.getByteBuffer(), client, marketHandler);
         try {
             Thread.currentThread().join();
         } catch (Exception ex) {
