@@ -19,7 +19,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.wphokomp.fixme.router.Market</mainClass>
+                            <mainClass>com.wphokomp.fixme.Market</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -19,7 +19,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.wphokomp.fixme.router.Broker</mainClass>
+                            <mainClass>com.wphokomp.fixme.Broker</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

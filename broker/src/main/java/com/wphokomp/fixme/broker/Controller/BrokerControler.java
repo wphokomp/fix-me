@@ -79,8 +79,8 @@ public class BrokerControler {
 
     public static boolean processResponse(String response) {
         String data[]  = response.split("\u0001");
-        String tag = null;
-        String buySell = null;
+        String tag = "";
+        String buySell = "";
 
         for (String _data:
              data) {
@@ -89,11 +89,11 @@ public class BrokerControler {
             if (_data.contains("39="))
                 buySell = _data.split("=")[1];
         }
-        if (tag != null && tag.equals("8") && tag.equals("8")) {
+        if (tag != null && tag.equals("8") && buySell.equals("8")) {
             System.out.println("\nMarket[" + marketId + "]: Order rejected.");
             return false;
         }
-        if (tag != null && tag.equals("8") && tag.equals("2")) {
+        if (tag != null && tag.equals("8") && buySell.equals("2")) {
             System.out.println("\nMarket[" + marketId + "]: Order approved.");
             return true;
         }

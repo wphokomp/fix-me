@@ -28,10 +28,10 @@ public class MarketHandler implements CompletionHandler<Integer, Client> {
                 System.out.printf("Server response: %d%n", client.getClientId());
                 client.setRead(false);
                 client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
+                System.out.println(client.getClientId());
                 return;
             } else
-                System.out.printf("Server response: %s%n", message.replace((char) 1, '|'));
-
+                System.out.printf("Server response: %s%n", message.replace((char) 1, '|').trim());
             client.getByteBuffer().clear();
             message = Market.processRequest(message);
             if (message.contains("disconnect")) {

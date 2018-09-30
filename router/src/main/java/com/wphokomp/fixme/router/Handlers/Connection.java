@@ -9,10 +9,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.Charset;
+import java.util.Random;
 
 public class Connection implements CompletionHandler<AsynchronousSocketChannel, Client> {
 
     private static int clientId = 100000; //Replace this with the method
+
+
+
     @Override
     public void completed(AsynchronousSocketChannel asynchronousSocketChannel, Client client) {
         try {
@@ -25,7 +29,7 @@ public class Connection implements CompletionHandler<AsynchronousSocketChannel, 
             Client newClient = new Client();
             newClient.setAsynchronousServerSocketChannel(client.getAsynchronousServerSocketChannel());
             newClient.setAsynchronousSocketChannel(client.getAsynchronousSocketChannel());
-            newClient.setClientId(clientId++);
+            newClient.setClientId(clientId);
             newClient.setByteBuffer(ByteBuffer.allocate(2048));
             newClient.setRead(false);
             newClient.setSocketAddress(socketAddress);

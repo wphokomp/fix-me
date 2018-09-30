@@ -23,6 +23,7 @@
                         </manifest>
                     </archive>
                 </configuration>
+                <version>2.10</version>
             </plugin>
         </plugins>
     </build>
