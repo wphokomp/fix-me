@@ -1,77 +1,90 @@
 package com.wphokomp.fixme.broker.Handler;
 
-import com.wphokomp.fixme.broker.Controller.BrokerControler;
-import com.wphokomp.fixme.core.Control.CoreControl;
-import com.wphokomp.fixme.core.Models.Client;
+import com.wphokomp.fixme.broker.Controller.BrokerController;
+import com.wphokomp.fixme.broker.Model.Client;
 
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.Charset;
 
 public class BrokerHandler implements CompletionHandler<Integer, Client> {
-    private static int i = 0;
     @Override
-    public void completed(Integer result, Client client) {
-        if (result == -1)
-        {
-            client.getMainThread().interrupt();
-            System.out.println("Broker disconnected...");
-            return ;
+    public void completed(Integer result, Client attach) {
+        if (result == -1) {
+            attach.mainThread.interrupt();
+            System.out.println("Server shutdown unexpectedly, Broker going offline...");
+            return;
         }
-        if (client.isRead()) {
-            client.getByteBuffer().flip();
-            Charset cs = Charset.defaultCharset();
-            int byteBufferLimit = client.getByteBuffer().limit();
-            byte bytes[] = new byte[byteBufferLimit];
-            client.getByteBuffer().get(bytes, 0, byteBufferLimit);
-            String message = new String(bytes, cs);
-            if (client.getClientId() == 0)
-            {
-                client.setClientId(Integer.parseInt(message));
-                System.out.printf("Server response: %d%n", client.getClientId());
-            }
-            else
-                System.out.printf("Server response: %s%n", message.replace((char) 1, '|'));
+        if (attach.isRead) {
+            attach.byteBuffer.flip();
+            Charset cs = Charset.forName("UTF-8");
+            int limits = attach.byteBuffer.limit();
+            byte bytes[] = new byte[limits];
+            attach.byteBuffer.get(bytes, 0, limits);
+            String msg = new String(bytes, cs);
+            if (attach.clientId == 0) {
+                attach.clientId = Integer.parseInt(msg);
+                System.out.println("Server responded with Id: " + attach.clientId);
+            } else
+                System.out.println("Server Responded: " + msg.replace((char) 1, '|'));
             try {
-                boolean s = BrokerControler.processResponse(message);
-                if (s == true && BrokerControler.broketStatus == 1)
-                    BrokerControler.update(true);
-                if (s == true && BrokerControler.broketStatus == 0)
-                    BrokerControler.update(false);
+                boolean s = BrokerController.proccessReply(msg);
+                if (s == true && BrokerController.bs == 1)
+                    BrokerController.updateData(true);
+                if (s == true && BrokerController.bs == 0)
+                    BrokerController.updateData(false);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            client.getByteBuffer().clear();
-            message = getMessage();
-            if (message.contains("disconnect") || i > 3) {
-                client.getMainThread().interrupt();
+            attach.byteBuffer.clear();
+            msg = testMe(attach);
+            if (msg.contains("bye") || i > 3) {
+                attach.mainThread.interrupt();
                 return;
             }
             i++;
-            System.out.println("\nBroker response:" + message.replace((char)1, '|'));
-            byte[] data = message.getBytes(cs);
-            client.getByteBuffer().put(data);
-            client.getByteBuffer().flip();
-            client.setRead(false);
-            client.getAsynchronousSocketChannel().write(client.getByteBuffer(), client, this);
-        }else {
-            client.setRead(true);
-            client.getByteBuffer().clear();
-            client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
+            System.out.println("\nBroker response:" + msg.replace((char) 1, '|'));
+            byte[] data = msg.getBytes(cs);
+            attach.byteBuffer.put(data);
+            attach.byteBuffer.flip();
+            attach.isRead = false; // It is a write
+            attach.asynchronousSocketChannel.write(attach.byteBuffer, attach, this);
+        } else {
+            attach.isRead = true;
+            attach.byteBuffer.clear();
+            attach.asynchronousSocketChannel.read(attach.byteBuffer, attach, this);
         }
     }
 
     @Override
-    public void failed(Throwable exc, Client client) {
-        exc.printStackTrace();
+    public void failed(Throwable e, Client attach) {
+        e.printStackTrace();
     }
 
-    private String getMessage() {
-        String message = "";
+    private String testMe(Client attach) {
+        String msg;
 
-        if (BrokerControler.broketStatus == 1)
-            message = BrokerControler.buyInstrument(BrokerControler.marketId);
+        if (BrokerController.bs == 1)
+            msg = BrokerController.buyProduct(BrokerController.dstId);
         else
-            message = BrokerControler.sellInstrument(BrokerControler.marketId);
-        return message + CoreControl.getChecksum(message);
+            msg = BrokerController.sellProduct(BrokerController.dstId);
+        return msg + getCheckSum(msg);
     }
+
+    private String getCheckSum(String msg) {
+        int j = 0;
+        char t[];
+        String soh = "" + (char) 1;
+        String datum[] = msg.split(soh);
+        for (int k = 0; k < datum.length; k++) {
+            t = datum[k].toCharArray();
+            for (int i = 0; i < t.length; i++) {
+                j += (int) t[i];
+            }
+            j += 1;
+        }
+        return ("10=" + (j % 256) + soh);
+    }
+
+    private static int i = 0;
+
 }

@@ -1,64 +1,94 @@
 package com.wphokomp.fixme.market.Handler;
 
-import com.wphokomp.fixme.core.Models.Client;
-import com.wphokomp.fixme.market.Controller.Market;
+import com.wphokomp.fixme.market.Controller.MarketController;
+import com.wphokomp.fixme.market.Model.Client;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.Charset;
 
 public class MarketHandler implements CompletionHandler<Integer, Client> {
     @Override
-    public void completed(Integer result, Client client) {
+    public void completed(Integer result, Client attach) {
         if (result == -1) {
-            client.getMainThread().interrupt();
-            System.out.println("Market disconnected...");
+            attach.mainThread.interrupt();
+            System.out.println("Server shutdown unexpectedly, Market going offline...");
             return;
         }
-
-        if (client.isRead()) {
-            client.getByteBuffer().flip();
-            Charset charset = Charset.defaultCharset(); //On this computer (MacOS) it's UTF-8
-            int byteBufferLimit = client.getByteBuffer().limit();
-            byte[] bytes = new byte[byteBufferLimit];
-            client.getByteBuffer().get(bytes, 0, byteBufferLimit);
-            String message = new String(bytes, charset);
-
-            if (client.getClientId() == 0) {
-                client.setClientId(Integer.parseInt(message));
-                System.out.printf("Server response: %d%n", client.getClientId());
-                client.setRead(false);
-                client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
-                System.out.println(client.getClientId());
+        if (attach.isRead) {
+            attach.byteBuffer.flip();
+            Charset cs = Charset.forName("UTF-8");
+            int limits = attach.byteBuffer.limit();
+            byte bytes[] = new byte[limits];
+            attach.byteBuffer.get(bytes, 0, limits);
+            String msg = new String(bytes, cs);
+            if (attach.clientId == 0) {
+                attach.clientId = Integer.parseInt(msg);
+                System.out.println("Server Responded with Id: " + attach.clientId);
+                attach.isRead = false;
+                attach.asynchronousSocketChannel.read(attach.byteBuffer, attach, this);
                 return;
             } else
-                System.out.printf("Server response: %s%n", message.replace((char) 1, '|').trim());
-            client.getByteBuffer().clear();
-            message = Market.processRequest(message);
-            if (message.contains("disconnect")) {
-                client.getMainThread().interrupt();
+                System.out.println("Server Responded: " + msg.replace((char) 1, '|'));
+
+
+            attach.byteBuffer.clear();
+            msg = MarketController.processRequest(msg);
+            if (msg.contains("bye")) {
+                attach.mainThread.interrupt();
                 return;
             }
-
             try {
-                System.out.printf("\nMarket response: %s%n", message.replace((char) 1, '|'));
-            } catch (Exception ex) {
-            }
+                System.out.println("\nMarket Response: " + msg.replace((char) 1, '|'));
+            } catch (Exception e) {
 
-            byte[] data = message.getBytes(charset);
-            client.getByteBuffer().put(data);
-            client.getByteBuffer().flip();
-            client.setRead(false);
-            client.getAsynchronousSocketChannel().write(client.getByteBuffer(), client, this);
+            }
+            byte[] data = msg.getBytes(cs);
+            attach.byteBuffer.put(data);
+            attach.byteBuffer.flip();
+            attach.isRead = false; // It is a write
+            attach.asynchronousSocketChannel.write(attach.byteBuffer, attach, this);
         } else {
-            client.setRead(true);
-            client.getByteBuffer().clear();
-            client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
+            attach.isRead = true;
+            attach.byteBuffer.clear();
+            attach.asynchronousSocketChannel.read(attach.byteBuffer, attach, this);
         }
     }
 
     @Override
-    public void failed(Throwable throwable, Client client) {
-        throwable.printStackTrace();
+    public void failed(Throwable e, Client attach) {
+        e.printStackTrace();
     }
 
+    private String getTextFromUser() throws Exception {
+        System.out.print("Please enter a  message  (Bye  to quit):");
+        BufferedReader consoleReader = new BufferedReader(
+                new InputStreamReader(System.in));
+        String msg = consoleReader.readLine();
+        return msg;
+    }
+
+    private String testMe() {
+        String soh = "" + (char) 1;
+        String msg = "id=" + 100000 + soh + "56=" + 100001 + soh + "msg=from market" + soh;
+        return msg + getCheckSum(msg);
+    }
+
+    private String getCheckSum(String msg) {
+        int j = 0;
+        char t[];
+        String soh = "" + (char) 1;
+        String datum[] = msg.split(soh);
+        for (int k = 0; k < datum.length; k++) {
+            t = datum[k].toCharArray();
+            for (int i = 0; i < t.length; i++) {
+                j += (int) t[i];
+            }
+            j += 1;
+        }
+        return ("10=" + (j % 256) + soh);
+    }
+
+    private static int i = 0;
 }
