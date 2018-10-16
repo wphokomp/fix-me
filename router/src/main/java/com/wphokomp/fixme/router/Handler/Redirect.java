@@ -12,23 +12,23 @@ public class Redirect implements IVerify {
             new Echo().performAction(client, response);
             return;
         }
-        int clientId = getDestination(client.message);
-        int sourceId = getSource(client.message);
-        if (sourceId != client.clientId) {
+        int clientId = getDestination(client.getMessage());
+        int sourceId = getSource(client.getMessage());
+        if (sourceId != client.getClientId()) {
             System.out.println("Source: " + sourceId + "Client ID: " + clientId);
             new Echo().performAction(client, IVerify.ECHO);
             return;
         }
 
         try {
-            if (client.asynchronousSocketChannel.isOpen() && RouterController.getSize() > 1) {
+            if (client.getAsynchronousSocketChannel().isOpen() && RouterController.getSize() > 1) {
                 Client client1 = RouterController.getClient(clientId);
                 if (client1 == null) {
                     new Echo().performAction(client, IVerify.ECHO);
                     return;
                 }
-                client1.isRead = false;
-                client1.asynchronousSocketChannel.write(client.byteBuffer, client1, client1.routerHandler);
+                client1.setRead(false);
+                client1.getAsynchronousSocketChannel().write(client.getByteBuffer(), client1, client1.getRouterHandler());
             }
         } catch (Exception ex) {
             new Echo().performAction(client, IVerify.ECHO);
@@ -50,7 +50,8 @@ public class Redirect implements IVerify {
         try {
             if (message[0].split("=")[0].equalsIgnoreCase("id"))
                 return Integer.parseInt(message[0].split("=")[1]);
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+        }
         return -1;
     }
 }

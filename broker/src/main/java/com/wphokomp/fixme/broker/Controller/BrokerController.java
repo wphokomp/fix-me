@@ -1,13 +1,12 @@
 package com.wphokomp.fixme.broker.Controller;
 
-import com.wphokomp.fixme.broker.Model.Client;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.Future;
 import com.wphokomp.fixme.broker.Handler.BrokerHandler;
+import com.wphokomp.fixme.core.Model.Client;
 
 public class BrokerController {
     private static int qty = 10;
@@ -29,20 +28,14 @@ public class BrokerController {
         result.get();
         System.out.println("Connected");
         attach = new Client();
-        attach.asynchronousSocketChannel = channel;
-        attach.byteBuffer = ByteBuffer.allocate(2048);
-        attach.isRead = true;
+        attach.setAsynchronousSocketChannel(channel);
+        attach.setByteBuffer(ByteBuffer.allocate(2048));
+        attach.setRead(true);
 
-        attach.mainThread = Thread.currentThread();
-
-        /*Charset cs = Charset.forName("UTF-8");
-        String msg = "Hello";
-        byte[] data = msg.getBytes(cs);
-        attach.buffer.put(data);
-        attach.buffer.flip();*/
+        attach.setMainThread(Thread.currentThread());
 
         BrokerHandler readWriteHandler = new BrokerHandler();
-        channel.read(attach.byteBuffer, attach, readWriteHandler);
+        channel.read(attach.getByteBuffer(), attach, readWriteHandler);
         try {
             Thread.currentThread().join();
         } catch (Exception e) {
@@ -52,8 +45,9 @@ public class BrokerController {
 
     public static String sellProduct(int dst) {
         String soh = "" + (char) 1;
-        String msg = "id=" + attach.clientId + soh + fixv + soh + "35=D" + soh + "54=2" + soh + "38=2" + soh + "44=55" + soh + "55=WTCSOCKS" + soh;
-        msg += "50=" + attach.clientId + soh + "49=" + attach.clientId + soh + "56=" + dst + soh;
+        String msg = String.format("id=%d%s%s%s35=D%s54=2%s38=2%s44=55%s55=Nuts%s", attach.getClientId()
+                , soh, fixv, soh, soh, soh, soh, soh, soh);
+        msg += String.format("50=%d%s49=%d%s56=%d%s", attach.getClientId(), soh, attach.getClientId(), soh, dst, soh);
         if (qty > 0)
             return msg;
         else
@@ -62,18 +56,18 @@ public class BrokerController {
 
     public static String buyProduct(int dst) {
         String soh = "" + (char) 1;
-        String msg = "id=" + attach.clientId + soh + fixv + soh + "35=D" + soh + "54=1" + soh + "38=2" + soh + "44=90" + soh + "55=WTCSHIRTS" + soh;
-        msg += "50=" + attach.clientId + soh + "49=" + attach.clientId + soh + "56=" + dst + soh;
+        String msg = String.format("id=%d%s%s%s35=D%s54=1%s38=2%s44=90%s55=Beer%s", attach.getClientId()
+                , soh, fixv, soh, soh, soh, soh, soh, soh);
+        msg += String.format("50=%d%s49=%d%s56=%d%s", attach.getClientId(), soh, attach.getClientId(), soh, dst, soh);
         if (cash > 0)
             return msg;
         else
             return "bye";
     }
 
-    public static boolean proccessReply(String reply) {
+    public static boolean processReply(String reply) {
         String data[] = reply.split("" + (char) 1);
-        String tag = "";
-        String state = "";
+        String tag= "", state = "";
         for (String dat : data) {
             if (dat.contains("35="))
                 tag = dat.split("=")[1];
@@ -81,11 +75,11 @@ public class BrokerController {
                 state = dat.split("=")[1];
         }
         if (tag.equals("8") && state.equals("8")) {
-            System.out.println("\nMarket[" + dstId + "] rejected order\n");
+            System.out.printf("\nMarket[%d] rejected order\n%n", dstId);
             return false;
         }
         if (tag.equals("8") && state.equals("2")) {
-            System.out.println("\nMarket[" + dstId + "] accepted order\n");
+            System.out.printf("\nMarket[%d] accepted order\n%n", dstId);
             return true;
         }
         return false;

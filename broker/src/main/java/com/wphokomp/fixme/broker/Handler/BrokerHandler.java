@@ -1,7 +1,8 @@
 package com.wphokomp.fixme.broker.Handler;
 
 import com.wphokomp.fixme.broker.Controller.BrokerController;
-import com.wphokomp.fixme.broker.Model.Client;
+import com.wphokomp.fixme.core.Controller.CoreControl;
+import com.wphokomp.fixme.core.Model.Client;
 
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.Charset;
@@ -10,24 +11,24 @@ public class BrokerHandler implements CompletionHandler<Integer, Client> {
     @Override
     public void completed(Integer result, Client attach) {
         if (result == -1) {
-            attach.mainThread.interrupt();
-            System.out.println("Server shutdown unexpectedly, Broker going offline...");
+            attach.getMainThread().interrupt();
+            System.out.format("Server shutdown unexpectedly, Broker[] going offline...", attach.getClientId());
             return;
         }
-        if (attach.isRead) {
-            attach.byteBuffer.flip();
-            Charset cs = Charset.forName("UTF-8");
-            int limits = attach.byteBuffer.limit();
+        if (attach.isRead()) {
+            attach.getByteBuffer().flip();
+            Charset charset = Charset.defaultCharset();
+            int limits = attach.getByteBuffer().limit();
             byte bytes[] = new byte[limits];
-            attach.byteBuffer.get(bytes, 0, limits);
-            String msg = new String(bytes, cs);
-            if (attach.clientId == 0) {
-                attach.clientId = Integer.parseInt(msg);
-                System.out.println("Server responded with Id: " + attach.clientId);
+            attach.getByteBuffer().get(bytes, 0, limits);
+            String msg = new String(bytes, charset);
+            if (attach.getClientId() == 0) {
+                attach.setClientId(Integer.parseInt(msg));
+                System.out.println("Allocated ID: " + attach.getClientId());
             } else
-                System.out.println("Server Responded: " + msg.replace((char) 1, '|'));
+                System.out.println("Server:" + msg.replace((char) 1, '|'));
             try {
-                boolean s = BrokerController.proccessReply(msg);
+                boolean s = BrokerController.processReply(msg);
                 if (s == true && BrokerController.bs == 1)
                     BrokerController.updateData(true);
                 if (s == true && BrokerController.bs == 0)
@@ -35,23 +36,23 @@ public class BrokerHandler implements CompletionHandler<Integer, Client> {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            attach.byteBuffer.clear();
-            msg = testMe(attach);
+            attach.getByteBuffer().clear();
+            msg = makeTransaction();
             if (msg.contains("bye") || i > 3) {
-                attach.mainThread.interrupt();
+                attach.getMainThread().interrupt();
                 return;
             }
             i++;
-            System.out.println("\nBroker response:" + msg.replace((char) 1, '|'));
-            byte[] data = msg.getBytes(cs);
-            attach.byteBuffer.put(data);
-            attach.byteBuffer.flip();
-            attach.isRead = false; // It is a write
-            attach.asynchronousSocketChannel.write(attach.byteBuffer, attach, this);
+            System.out.println("\nBroker:" + msg.replace((char) 1, '|'));
+            byte[] data = msg.getBytes(charset);
+            attach.getByteBuffer().put(data);
+            attach.getByteBuffer().flip();
+            attach.setRead(false); // It is a write
+            attach.getAsynchronousSocketChannel().write(attach.getByteBuffer(), attach, this);
         } else {
-            attach.isRead = true;
-            attach.byteBuffer.clear();
-            attach.asynchronousSocketChannel.read(attach.byteBuffer, attach, this);
+            attach.setRead(true);
+            attach.getByteBuffer().clear();
+            attach.getAsynchronousSocketChannel().read(attach.getByteBuffer(), attach, this);
         }
     }
 
@@ -60,29 +61,14 @@ public class BrokerHandler implements CompletionHandler<Integer, Client> {
         e.printStackTrace();
     }
 
-    private String testMe(Client attach) {
+    private String makeTransaction() {
         String msg;
 
         if (BrokerController.bs == 1)
             msg = BrokerController.buyProduct(BrokerController.dstId);
         else
             msg = BrokerController.sellProduct(BrokerController.dstId);
-        return msg + getCheckSum(msg);
-    }
-
-    private String getCheckSum(String msg) {
-        int j = 0;
-        char t[];
-        String soh = "" + (char) 1;
-        String datum[] = msg.split(soh);
-        for (int k = 0; k < datum.length; k++) {
-            t = datum[k].toCharArray();
-            for (int i = 0; i < t.length; i++) {
-                j += (int) t[i];
-            }
-            j += 1;
-        }
-        return ("10=" + (j % 256) + soh);
+        return msg + CoreControl.getCheckSum(msg);
     }
 
     private static int i = 0;

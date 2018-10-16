@@ -16,70 +16,56 @@ public class RouterHandler implements CompletionHandler<Integer, Client> {
     }
 
     @Override
-    public void completed(Integer result, Client attach) {
+    public void completed(Integer result, Client client) {
 
         if (result == -1) {
             try {
-                attach.asynchronousSocketChannel.close();
-                RouterController.removeClient(attach.clientId);
-                String port = attach.asynchronousServerSocketChannel.getLocalAddress().toString().split(":")[1];
-                System.out.format("[" + getServerName(port) + "]Stopped   listening to the   client %s%n",
-                        attach.socketAddress);
+                client.getAsynchronousSocketChannel().close();
+                RouterController.removeClient(client.getClientId());
+                String port = client.getAsynchronousServerSocketChannel().getLocalAddress()
+                        .toString().split(":")[1];
+                String clientType = (port.equals("5000") ? "Broker" : "Market");
+                System.out.format("Stopped listening to [" + clientType + "]%n");
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
             return;
         }
 
-        if (attach.isRead) {
-            attach.byteBuffer.flip();
-            int limits = attach.byteBuffer.limit();
+        if (client.isRead()) {
+            client.getByteBuffer().flip();
+            int limits = client.getByteBuffer().limit();
             byte bytes[] = new byte[limits];
-            attach.byteBuffer.get(bytes, 0, limits);
-            Charset cs = Charset.forName("UTF-8");
-            String msg = new String(bytes, cs);
-            String datum[] = msg.split(SOH);
-            attach.message = datum;
+            client.getByteBuffer().get(bytes, 0, limits);
+            Charset charset = Charset.defaultCharset();
+            String message = new String(bytes, charset);
+            String datum[] = message.split(SOH);
+            client.setMessage(datum);
             try {
-                String port = attach.asynchronousServerSocketChannel.getLocalAddress().toString().split(":")[1];
-                System.out.format("[" + getServerName(port) + "]Client at  %s  says: %s%n", attach.socketAddress,
-                        msg.replace((char) 1, '|'));
+                String port = client.getAsynchronousServerSocketChannel().getLocalAddress()
+                        .toString().split(":")[1];
+                String clientType = (port.equals("5000") ? "Broker" : "Market");
+                System.out.format("[" + clientType + "] response: %s%n", message.replace((char) 1, '|'));
             } catch (Exception e) {
                 System.out.println(e);
             }
-            attach.isRead = false; // It is a write
-            attach.byteBuffer.rewind();
-            attach.byteBuffer.clear();
-            byte[] data = msg.getBytes(cs);
-            attach.byteBuffer.put(data);
-            attach.byteBuffer.flip();
-            if (attach.asynchronousSocketChannel.isOpen() && RouterController.getSize() > 1) {
-                new Checksum().performAction(attach, IVerify.CHECKSUM);
-                //attach.client.write(attach.byteBuffer, attach, this);
+            client.setRead(false); // It is a write
+            client.getByteBuffer().rewind();
+            client.getByteBuffer().clear();
+            byte[] data = message.getBytes(charset);
+            client.getByteBuffer().put(data);
+            client.getByteBuffer().flip();
+            if (client.getAsynchronousSocketChannel().isOpen() && RouterController.getSize() > 1) {
+                new Checksum().performAction(client, IVerify.CHECKSUM);
             }
-        /*attach.byteBuffer.put(bytes);
-        attach.client.write(attach.byteBuffer, attach, this);*/
-
         } else {
-            // Write to the client
-            //System.out.println("Hello");
-            //attach.client.write(attach.byteBuffer, attach, this);
-            attach.isRead = true;
-            attach.byteBuffer.clear();
-            attach.asynchronousSocketChannel.read(attach.byteBuffer, attach, this);
-
+            client.setRead(true);
+            client.getByteBuffer().clear();
+            client.getAsynchronousSocketChannel().read(client.getByteBuffer(), client, this);
         }
     }
      @Override
-    public void failed(Throwable e, Client attach) {
+    public void failed(Throwable e, Client client) {
         e.printStackTrace();
     }
-
-    private String getServerName(String port) {
-        if (port.equals("5000"))
-            return "Broker Server";
-        else
-            return "Market Server";
-    }
-
 }

@@ -11,8 +11,8 @@ public class Checksum implements IVerify {
             new Redirect().performAction(client, response);
             return;
         }
-        int size = getMessageSize(client.message);
-        int checksum = getChecksum(client.message[client.message.length - 1]);
+        int size = getMessageSize(client.getMessage());
+        int checksum = getChecksum(client.getMessage()[client.getMessage().length - 1]);
         int action = IVerify.ECHO;
         if (size % 256 != checksum)
             action = IVerify.ECHO;

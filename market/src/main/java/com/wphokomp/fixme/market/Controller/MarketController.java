@@ -1,7 +1,8 @@
 package com.wphokomp.fixme.market.Controller;
 
+import com.wphokomp.fixme.core.Controller.CoreControl;
+import com.wphokomp.fixme.core.Model.Client;
 import com.wphokomp.fixme.market.Handler.MarketHandler;
-import com.wphokomp.fixme.market.Model.Client;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -30,25 +31,19 @@ public class MarketController {
     }
 
     public void connect() throws Exception {
-        AsynchronousSocketChannel channel = AsynchronousSocketChannel.open();
+        AsynchronousSocketChannel asynchronousSocketChannel = AsynchronousSocketChannel.open();
         SocketAddress serverAddr = new InetSocketAddress("localhost", 5001);
-        Future<Void> result = channel.connect(serverAddr);
+        Future<Void> result = asynchronousSocketChannel.connect(serverAddr);
         result.get();
         System.out.println("Connected");
         attach = new Client();
-        attach.asynchronousSocketChannel = channel;
-        attach.byteBuffer = ByteBuffer.allocate(2048);
-        attach.isRead = true;
-        attach.mainThread = Thread.currentThread();
-
-        /*Charset cs = Charset.forName("UTF-8");
-        String msg = "Hello";
-        byte[] data = msg.getBytes(cs);
-        attach.buffer.put(data);
-        attach.buffer.flip();*/
+        attach.setAsynchronousSocketChannel(asynchronousSocketChannel);
+        attach.setByteBuffer(ByteBuffer.allocate(2048));
+        attach.setRead(true);
+        attach.setMainThread(Thread.currentThread());
 
         MarketHandler marketHandler = new MarketHandler();
-        channel.read(attach.byteBuffer, attach, marketHandler);
+        asynchronousSocketChannel.read(attach.getByteBuffer(), attach, marketHandler);
         try {
             Thread.currentThread().join();
         } catch (Exception e) {
@@ -74,7 +69,6 @@ public class MarketController {
             else if (dat.contains("id="))
                 dstId = Integer.parseInt(dat.split("=")[1]);
         }
-
         return process(msgType, reqType, price, quant);
     }
 
@@ -93,30 +87,18 @@ public class MarketController {
         String soh = "" + (char) 1;
         String msg = "";
         if (code == 1)
-            msg = "id=" + attach.clientId + soh + fixv + soh + "35=8" + soh + "39=8" + soh + "50=" + attach.clientId + soh + "49=" + attach.clientId + soh + "56=" + dstId + soh;
+            msg = String.format("id=%d%s%s%s35=8%s39=8%s50=%d%s49=%d%s56=%d%s", attach.getClientId(), soh, fixv
+                    , soh, soh, soh, attach.getClientId(), soh, attach.getClientId(), soh, dstId, soh);
         if (code == 2) {
-            msg = "id=" + attach.clientId + soh + fixv + soh + "35=8" + soh + "39=2" + soh + "50=" + attach.clientId + soh + "49=" + attach.clientId + soh + "56=" + dstId + soh;
+            msg = String.format("id=%d%s%s%s35=8%s39=2%s50=%d%s49=%d%s56=%d%s", attach.getClientId(), soh, fixv
+                    , soh, soh, soh, attach.getClientId(), soh, attach.getClientId(), soh, dstId, soh);
             qty -= quant;
         }
         if (code == 3) {
-            msg = "id=" + attach.clientId + soh + fixv + soh + "35=8" + soh + "39=2" + soh + "50=" + attach.clientId + soh + "49=" + attach.clientId + soh + "56=" + dstId + soh;
+            msg = String.format("id=%d%s%s%s35=8%s39=2%s50=%d%s49=%d%s56=%d%s", attach.getClientId(), soh, fixv
+                    , soh, soh, soh, attach.getClientId(), soh, attach.getClientId(), soh, dstId, soh);
             qty += quant;
         }
-        return msg + getCheckSum(msg);
-    }
-
-    private static String getCheckSum(String msg) {
-        int j = 0;
-        char t[];
-        String soh = "" + (char) 1;
-        String datum[] = msg.split(soh);
-        for (int k = 0; k < datum.length; k++) {
-            t = datum[k].toCharArray();
-            for (int i = 0; i < t.length; i++) {
-                j += (int) t[i];
-            }
-            j += 1;
-        }
-        return ("10=" + (j % 256) + soh);
+        return msg + CoreControl.getCheckSum(msg);
     }
 }

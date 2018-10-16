@@ -4,44 +4,52 @@ import com.wphokomp.fixme.router.Controller.RouterController;
 import com.wphokomp.fixme.router.Model.Client;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.Charset;
+import java.util.Random;
 
 public class ConnectionHandler implements CompletionHandler<AsynchronousSocketChannel, Client> {
-    private static int clientId = 100000;
+
     @Override
-    public void completed(AsynchronousSocketChannel client, Client attach) {
+    public void completed(AsynchronousSocketChannel asynchronousSocketChannel, Client client) {
         try {
-            SocketAddress clientAddr = client.getRemoteAddress();
-            System.out.format("Accepted a  connection from  %s%n", clientAddr);
-            attach.asynchronousServerSocketChannel.accept(attach, this);
-            RouterHandler rwHandler = new RouterHandler();
-            Client newAttach = new Client();
-            newAttach.asynchronousServerSocketChannel = attach.asynchronousServerSocketChannel;
-            newAttach.asynchronousSocketChannel = client;
-            newAttach.clientId = clientId++;
-            newAttach.byteBuffer = ByteBuffer.allocate(2048);
-            newAttach.isRead = false;
-            newAttach.socketAddress = clientAddr;
-            Charset cs = Charset.forName("UTF-8");
-            byte data[] = Integer.toString(newAttach.clientId).getBytes(cs);
-            newAttach.routerHandler = rwHandler;
-            newAttach.byteBuffer.put(data);
-            newAttach.byteBuffer.flip();
-            RouterController.addClient(newAttach);
-            client.write(newAttach.byteBuffer, newAttach, rwHandler);
+            SocketAddress clientAddr = asynchronousSocketChannel.getLocalAddress();
+            System.out.println("Connection accepted.");
+            client.getAsynchronousServerSocketChannel().accept(client, this);
+            RouterHandler routerHandler = new RouterHandler();
+            Client newClient = new Client();
+            newClient.setAsynchronousServerSocketChannel(client.getAsynchronousServerSocketChannel());
+            newClient.setAsynchronousSocketChannel(asynchronousSocketChannel);
+            newClient.setClientId(Integer.parseInt(generateClientID()));
+            newClient.setByteBuffer(ByteBuffer.allocate(2048));
+            newClient.setRead(false);
+            newClient.setSocketAddress(clientAddr);
+            Charset charset = Charset.defaultCharset();
+            byte data[] = Integer.toString(newClient.getClientId()).getBytes(charset);
+            newClient.setRouterHandler(routerHandler);
+            newClient.getByteBuffer().put(data);
+            newClient.getByteBuffer().flip();
+            RouterController.addClient(newClient);
+            asynchronousSocketChannel.write(newClient.getByteBuffer(), newClient, routerHandler);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void failed(Throwable e, Client attach) {
-        System.out.println("Failed to accept a  connection.");
+    public void failed(Throwable e, Client client) {
+        System.out.println("Failed to accept a connection.");
         e.printStackTrace();
     }
 
+    public static String generateClientID() {
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+
+        return String.format("%06d", number);
+    }
 }

@@ -9,7 +9,7 @@ public class Echo implements IVerify {
     public void performAction(Client client, int response) {
         if (response != ECHO)
             return ;
-        client.isRead = false;
-        client.asynchronousSocketChannel.write(client.byteBuffer, client, client.routerHandler);
+        client.setRead(false);
+        client.getAsynchronousSocketChannel().write(client.getByteBuffer(), client, client.getRouterHandler());
     }
 }

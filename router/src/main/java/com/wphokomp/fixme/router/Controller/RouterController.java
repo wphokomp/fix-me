@@ -25,7 +25,7 @@ public class RouterController {
     public static Client getClient(int clientId) {
         for (Client _client :
                 clients) {
-            if (_client.clientId == clientId)
+            if (_client.getClientId() == clientId)
                 return _client;
         }
         return null;

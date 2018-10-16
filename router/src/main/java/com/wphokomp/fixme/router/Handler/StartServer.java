@@ -23,7 +23,7 @@ public class StartServer implements Runnable {
             if (this.port % 2 == 0) System.out.format("Server is listening for Brokers at: %s%n", inetSocketAddress);
             else System.out.format("Server is listening for Markets at: %s%n", inetSocketAddress);
             Client client = new Client();
-            client.asynchronousServerSocketChannel = asynchronousServerSocketChannel;
+            client.setAsynchronousServerSocketChannel(asynchronousServerSocketChannel);
             asynchronousServerSocketChannel.accept(client, new ConnectionHandler());
             Thread.currentThread().join();
         } catch (Exception ex) {

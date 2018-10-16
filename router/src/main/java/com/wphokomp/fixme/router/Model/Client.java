@@ -5,14 +5,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import com.wphokomp.fixme.router.Handler.RouterHandler;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class Client {
-    public AsynchronousServerSocketChannel asynchronousServerSocketChannel;
-    public AsynchronousSocketChannel asynchronousSocketChannel;
-    public int clientId;
-    public ByteBuffer byteBuffer;
-    public SocketAddress socketAddress;
-    public String message[];
-    public RouterHandler routerHandler;
-    public boolean isRead;
+    private AsynchronousServerSocketChannel asynchronousServerSocketChannel;
+    private AsynchronousSocketChannel asynchronousSocketChannel;
+    private int clientId;
+    private ByteBuffer byteBuffer;
+    private SocketAddress socketAddress;
+    private String message[];
+    private RouterHandler routerHandler;
+    private boolean isRead;
 }
